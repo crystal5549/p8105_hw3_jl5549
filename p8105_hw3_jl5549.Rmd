@@ -1,0 +1,62 @@
+---
+title: "p8105_hw3_jl5549"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(p8105.datasets)
+```
+
+Problem 1
+
+```{r}
+data("instacart")
+```
+
+```{r}
+info_aisle= 
+  instacart %>% 
+  group_by(aisle) %>%
+  summarize(n_items = n()) %>% 
+  arrange(n_items)
+n_aisle = nrow(info_aisle)
+aisle_most_order = info_aisle[nrow(info_aisle),1]
+```
+There are `r {nrow(info_aisle)}` aisles and the aisle the most items are orderd from is `r {aisle_most_order}`.
+```{r}
+aisle_most_order
+info_aisle %>% 
+  filter(n_items<=10000) %>% 
+  ggplot(aes(x = aisle_id, y = n_items))+
+  geom_histogram()+
+  labs(x = 'Aisle',
+       y = 'Number of items ordered',
+       title = 'The number of items ordered in each aisle')
+```
+
+```{r}
+instacart %>%
+  filter(aisle == c('baking ingredients', 'dog food care', 'packaged vegetables fruits')) %>%
+   group_by(aisle,product_name) %>%  
+  summarize(n = n()) %>% 
+  filter(min_rank(desc(n)) < 4) 
+ 
+```
+
+```{r}
+instacart %>%
+  group_by(product_name, order_dow) %>% 
+  summarize(mean_hour = mean(order_hour_of_day)) %>% 
+  filter( product_name %in% c('Pink Lady Apples', 'Coffee Ice Cream')) %>%
+  pivot_wider(names_from = product_name,
+              values_from = mean_hour)
+
+```
+
+Problem2 
+```{r}
+data("BRFSS")
+```
+
