@@ -7,6 +7,7 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(p8105.datasets)
+library(ggplot2)
 ```
 
 Problem 1
@@ -14,7 +15,23 @@ Problem 1
 ```{r}
 data("instacart")
 ```
-
+The data contains `r {nrow(instacart)}` rows and `r {ncol(instacart)}` variables. The variables are shown following:
+order_id: order identifier
+product_id: product identifier
+add_to_cart_order: order in which each product was added to cart
+reordered: 1 if this prodcut has been ordered by this user in the past, 0 otherwise
+user_id: customer identifier
+eval_set: which evaluation set this order belongs in (Note that the data for use in this class is exclusively from the “train” eval_set)
+order_number: the order sequence number for this user (1=first, n=nth)
+order_dow: the day of the week on which the order was placed
+order_hour_of_day: the hour of the day on which the order was placed
+days_since_prior_order: days since the last order, capped at 30, NA if order_number=1
+product_name: name of the product
+aisle_id: aisle identifier
+department_id: department identifier
+aisle: the name of the aisle
+department: the name of the department 
+Here is an example of variables: `r {head(instacart)}`
 ```{r}
 info_aisle= 
   instacart %>% 
@@ -24,19 +41,23 @@ info_aisle=
 n_aisle = nrow(info_aisle)
 aisle_most_order = info_aisle[nrow(info_aisle),1]
 ```
-There are `r {nrow(info_aisle)}` aisles and the aisle the most items are orderd from is `r {aisle_most_order}`.
+There are `r {n_aisle}` aisles and the aisle the most items are orderd from is `r {aisle_most_order}`.
 ```{r}
-aisle_most_order
-info_aisle %>% 
-  filter(n_items<=10000) %>% 
-  ggplot(aes(x = aisle_id, y = n_items))+
-  geom_histogram()+
+#a plot showing the number of items ordered in each aisle
+instacart %>% 
+  group_by(aisle) %>% 
+  summarize(n_items = n()) %>% 
+  filter(n_items>10000) %>% 
+  ggplot()+
+  geom_col(aes(x = aisle, y = n_items))+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
   labs(x = 'Aisle',
        y = 'Number of items ordered',
        title = 'The number of items ordered in each aisle')
 ```
 
 ```{r}
+#table showing the three most popular items in three aisles
 instacart %>%
   filter(aisle == c('baking ingredients', 'dog food care', 'packaged vegetables fruits')) %>%
    group_by(aisle,product_name) %>%  
@@ -46,6 +67,7 @@ instacart %>%
 ```
 
 ```{r}
+#table showing the mean hour of the day
 instacart %>%
   group_by(product_name, order_dow) %>% 
   summarize(mean_hour = mean(order_hour_of_day)) %>% 
@@ -56,7 +78,50 @@ instacart %>%
 ```
 
 Problem2 
+
 ```{r}
-data("BRFSS")
+data("brfss_smart2010")
+mydata =brfss_smart2010 %>% 
+    janitor::clean_names() %>% 
+    filter(topic == "Overall Health",
+           response %in% c("Poor", "Fair", "Good", "Very good", "Excellent")) %>%
+   mutate(response = factor(response,levels = c("Poor", "Fair", "Good", "Very good", "Excellent"))) 
+```
+
+```{r}
+#states  bserved at 7 or more locations in 2002 and 2010 
+mydata
+mydata %>% 
+  group_by(locationdesc, locationabbr, year) %>% 
+  summarize(n=n()) %>%  
+  filter(year %in% c(2002, 2010)) %>% 
+  group_by(year, locationabbr) %>% 
+  summarize(n = n()) %>% 
+  filter(n > 6)
+```
+```{r}
+#dataset that is limited to Excellent and a new variable created
+excellent = mydata %>% 
+  filter(response == 'Excellent') %>% 
+  group_by(locationabbr, year) %>% 
+  mutate(data_value_mean = mean(data_value))
+excellent %>% 
+  ggplot()+
+  geom_line(aes(x = year, y = data_value_mean,
+                color = locationabbr, group = locationabbr))+
+  scale_y_continuous(
+    breaks = c(10, 20, 30), 
+    limits = c(12, 30))
+
+```
+```{r}
+mydata %>%
+  filter(locationabbr == 'NY',
+         year %in% c(2006,2010)) %>% 
+  ggplot()+
+  geom_line(aes(x = response, y = data_value,
+                color = locationdesc, 
+                group = locationdesc ))+
+  facet_grid(~year)
 ```
 
