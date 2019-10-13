@@ -41,6 +41,7 @@ instacart %>%
        y = 'Number of items ordered',
        title = 'The number of items ordered in each aisle')
 ```
+
 It can be concluded that users order their products the most in aisles 'fresh friut' and 'fresh vegetables', and relatively less products in aisles 'oils vinegars' and 'butter'.
 ```{r}
 #a table showing the three most popular items in three aisles
@@ -88,6 +89,7 @@ mydata %>%
   summarize(n = n()) %>% 
   filter(n > 6)
 ```
+
 In 2002, states CT, FL, MA, NC, NJ, PA were observed at 7 or more locations.
 In 2010, they are CA, CO, FL, MA, MD, NC, NE, NJ, NY, OH, PA, SC, TX, WA.
 ```{r}
@@ -121,6 +123,7 @@ mydata %>%
   theme(axis.text.x = element_text(angle = 60, hjust = 1))+
   facet_grid(~year)
 ```
+
 It can seen that 'Very good' is generally the most response in 2006 and 2010 across the counties in NY state.
 Problem 3
 ```{r}
