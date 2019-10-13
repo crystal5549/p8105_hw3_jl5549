@@ -15,23 +15,9 @@ Problem 1
 ```{r}
 data("instacart")
 ```
-The data contains `r {nrow(instacart)}` rows and `r {ncol(instacart)}` variables. The variables are shown following:
-order_id: order identifier
-product_id: product identifier
-add_to_cart_order: order in which each product was added to cart
-reordered: 1 if this prodcut has been ordered by this user in the past, 0 otherwise
-user_id: customer identifier
-eval_set: which evaluation set this order belongs in (Note that the data for use in this class is exclusively from the “train” eval_set)
-order_number: the order sequence number for this user (1=first, n=nth)
-order_dow: the day of the week on which the order was placed
-order_hour_of_day: the hour of the day on which the order was placed
-days_since_prior_order: days since the last order, capped at 30, NA if order_number=1
-product_name: name of the product
-aisle_id: aisle identifier
-department_id: department identifier
-aisle: the name of the aisle
-department: the name of the department 
-Here is an example of variables: `r {head(instacart)}`
+The data contains `r {nrow(instacart)}` rows and `r {ncol(instacart)}` variables.  
+Some key variables are shown following: order_dow: the day of the week on which the order was placed, order_hour_of_day: the hour of the day on which the order was placed, product_name: name of the product, aisle_id: aisle identifier, aisle: the name of the aisle.
+
 ```{r}
 info_aisle= 
   instacart %>% 
@@ -55,27 +41,29 @@ instacart %>%
        y = 'Number of items ordered',
        title = 'The number of items ordered in each aisle')
 ```
-
+It can be concluded that users order their products the most in aisles 'fresh friut' and 'fresh vegetables', and relatively less products in aisles 'oils vinegars' and 'butter'.
 ```{r}
-#table showing the three most popular items in three aisles
+#a table showing the three most popular items in three aisles
 instacart %>%
-  filter(aisle == c('baking ingredients', 'dog food care', 'packaged vegetables fruits')) %>%
+  filter(aisle %in% c('baking ingredients', 'dog food care', 'packaged vegetables fruits')) %>%
    group_by(aisle,product_name) %>%  
   summarize(n = n()) %>% 
   filter(min_rank(desc(n)) < 4) 
  
 ```
-
+Products ordered the most in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits” are Light Brown Sugar(499), Snack Sticks Chicken & Rice Recipe Dog Treats(30) and Organic Baby Spinach(9784) respectively. The number of products ordered in aisle 'packaged vegetables fruits' are generally more than other two aisles. 
 ```{r}
-#table showing the mean hour of the day
+#a table showing the mean hour of the day
 instacart %>%
   group_by(product_name, order_dow) %>% 
   summarize(mean_hour = mean(order_hour_of_day)) %>% 
   filter( product_name %in% c('Pink Lady Apples', 'Coffee Ice Cream')) %>%
   pivot_wider(names_from = product_name,
-              values_from = mean_hour)
+              values_from = mean_hour) %>% 
+  select(-order_dow)
 
 ```
+Users normally order more coffe ice cream from Wednesday to Friday, and order the most Pink Lady Apples on Thursday. 
 
 Problem2 
 
@@ -86,11 +74,12 @@ mydata =brfss_smart2010 %>%
     filter(topic == "Overall Health",
            response %in% c("Poor", "Fair", "Good", "Very good", "Excellent")) %>%
    mutate(response = factor(response,levels = c("Poor", "Fair", "Good", "Very good", "Excellent"))) 
+head(mydata)
 ```
 
 ```{r}
-#states  bserved at 7 or more locations in 2002 and 2010 
-mydata
+#states observed at 7 or more locations in 2002 and 2010 
+
 mydata %>% 
   group_by(locationdesc, locationabbr, year) %>% 
   summarize(n=n()) %>%  
@@ -99,12 +88,18 @@ mydata %>%
   summarize(n = n()) %>% 
   filter(n > 6)
 ```
+In 2002, states CT, FL, MA, NC, NJ, PA were observed at 7 or more locations.
+In 2010, they are CA, CO, FL, MA, MD, NC, NE, NJ, NY, OH, PA, SC, TX, WA.
 ```{r}
-#dataset that is limited to Excellent and a new variable created
+#a dataset that is limited to Excellent and a new variable created
 excellent = mydata %>% 
   filter(response == 'Excellent') %>% 
   group_by(locationabbr, year) %>% 
   mutate(data_value_mean = mean(data_value))
+head(excellent)
+```
+A “spaghetti” plot of this average value over time within a state is shown below:
+```{r}
 excellent %>% 
   ggplot()+
   geom_line(aes(x = year, y = data_value_mean,
@@ -112,9 +107,10 @@ excellent %>%
   scale_y_continuous(
     breaks = c(10, 20, 30), 
     limits = c(12, 30))
-
 ```
+
 ```{r}
+#a two-panel plot showing distribution of data_value for responses among locations in NY State for the years 2006 and 2010
 mydata %>%
   filter(locationabbr == 'NY',
          year %in% c(2006,2010)) %>% 
@@ -122,6 +118,53 @@ mydata %>%
   geom_line(aes(x = response, y = data_value,
                 color = locationdesc, 
                 group = locationdesc ))+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
   facet_grid(~year)
 ```
+It can seen that 'Very good' is generally the most response in 2006 and 2010 across the counties in NY state.
+Problem 3
+```{r}
+accel = read_csv(file = './accel_data.csv')
 
+accel_tidy = accel %>%
+  janitor::clean_names() %>% 
+  mutate(weekday_vs_weekend = ifelse(day %in% c('Saturday', 'Sunday'), '0', '1')) %>% 
+  select(weekday_vs_weekend, everything()) %>%  
+  pivot_longer(5:ncol(.),
+              names_to = 'activities',
+              values_to = 'data',
+              names_prefix = 'activity_')
+head(accel_tidy)
+```
+There are `r {ncol(accel_tidy)}` variables existing, including following key variables:
+weekday_vs_weekend: indicate whether the day monitored is a weedkay or a day of weekend. '1' indicates a weekday, otherwise a day in weekend
+activities: nth minute of a 24-hour day starting at midnight
+data: activity counts for yertain minute
+There are `r {nrow(accel_tidy)}` observations.
+```{r}
+total = accel_tidy %>% 
+  group_by(day_id, week, day) %>% 
+  summarize(total = sum(data)) %>% 
+  mutate(day = factor(day, levels =c('Monday', 'Tuesday', 
+                                              'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')))
+
+```
+According to the table created, the trend of activities for each day are not apparent.
+```{r}
+activity = 
+  accel_tidy %>%
+  group_by(week, day_id) %>% 
+  mutate(day = factor(day, levels =c('Monday', 'Tuesday', 'Wednesday',
+                                     'Thursday', 'Friday', 'Saturday', 'Sunday')),
+         activities = as.integer(activities)) %>% 
+  arrange(activities)
+  
+activity %>% 
+  ggplot(aes(x = activities, y = data, color = day))+
+  geom_line(alpha = 0.5)+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
+  scale_x_continuous(breaks  = seq(0, 1500, 60))
+  
+activity  
+```
+We can see from the graph that there are peaks at noon on Sunday and at night on Monday, Wednesday, Friday and Saturday.
